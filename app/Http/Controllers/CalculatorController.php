@@ -6,6 +6,12 @@ use App\Models\b1;
 use App\Models\b3;
 use App\Models\b4;
 use App\Models\b5;
+use App\Models\m1;
+use App\Models\m3;
+use App\Models\m5;
+use App\Models\m6;
+use App\Models\m7;
+use App\Models\pl_radi_tezlik_zolagi;
 use App\Models\service_type;
 use App\Models\user_group;
 use Illuminate\Http\Request;
@@ -17,9 +23,17 @@ class CalculatorController extends Controller
     {
         return response()->json(user_group::all(), 200);
     }
-    public function OneTimePaymentServiceType()
+//    ?payment_type_id=1 or 2 seklinde parametir oturulur burda
+    public function OneTimePaymentServiceType(Request $request)
     {
-        return response()->json(service_type::all(), 200);
+        $paymentTypeId = $request->input('payment_type_id');
+        $query = service_type::query();
+
+        if ($paymentTypeId) {
+            $query->where('payment_type_id', $paymentTypeId);
+        }
+
+        return response()->json($query->get(), 200);
     }
     public function OneTimePaymentB4()
     {
@@ -32,20 +46,14 @@ class CalculatorController extends Controller
         $serviceTypeName=service_type::where('id', $serviceType)->first()->name;
         $b1Model = b1::where('service_type_id', $serviceType)->first();
         $b1Name = $serviceTypeName;
-        $b1Coefficient = $b1Model ? $b1Model->coefficient : null;
         $b3Model = b3::where('service_type_id', $serviceType)->first();
         $b3Name = $b3Model ? $serviceTypeName. ' ' .($b3Model->name) : $serviceTypeName;
-        $b3Coefficient = $b3Model ? $b3Model->coefficient : null;
         $b5Model = b5::where('service_type_id', $serviceType)->first();
         $b5Name = $b5Model ? $b5Model->name : null;
-        $b5Coefficient = $b5Model ? $b5Model->coefficient : null;
         return response()->json([
-            'B1_name' => $b1Name,
-            'B1_coefficient' => $b1Coefficient,
-            'B3_name' => $b3Name,
-            'B3_coefficient' => $b3Coefficient,
-            'B5_name' => $b5Name,
-            'B5_coefficient' => $b5Coefficient
+            'b1' => array_merge($b1Model->toArray(),['name' => $b1Name]),
+            'b3' => array_merge($b3Model->toArray(),['name' => $b3Name]),
+            'b5' => array_merge($b5Model->toArray(),['name' => $b5Name])
         ]);
     }
 
@@ -62,15 +70,17 @@ class CalculatorController extends Controller
     public function OneTimePaymentPost(Request $request)
     {
         $data = $request->all();
+        $UserGroupCoefficient = user_group::find($data['UserQrup'])->coefficient;
         $b1Coefficient = b1::find($data['B1'])->coefficient;
         $b2Coefficient = $data['B2'];
         $b3Coefficient = b3::find($data['B3'])->coefficient;
         $b4Coefficient = b4::find($data['B4'])->coefficient;
         $b5Coefficient = b5::find($data['B5'])->coefficient;
-        $Sum=$b1Coefficient*$b2Coefficient*$b3Coefficient*$b4Coefficient*$b5Coefficient;
+        $Sum=$b1Coefficient*$b2Coefficient*$b3Coefficient*$b4Coefficient*$b5Coefficient*$UserGroupCoefficient;
         $FirstTotal = round($Sum / 1.18, 2);
         $TaxTotal = round(($Sum / 1.18) * 0.18, 2);
         return response()->json([
+            'UserGroup_coefficient' => $UserGroupCoefficient,
             'B1_coefficient' => $b1Coefficient,
             'B2_coefficient' => $b2Coefficient,
             'B3_coefficient' => $b3Coefficient,
@@ -81,8 +91,74 @@ class CalculatorController extends Controller
             'TaxTotal' => $TaxTotal,
         ]);
     }
-    public function TermPayment(Request $request)
+    public function SellularTermPayment(Request $request)
     {
         //
+    }
+    public function OtherTermPaymentM1M3M5M6M7(Request $request)
+    {
+        $serviceType = $request->input('service_type_id');
+        $serviceTypeName=service_type::where('id', $serviceType)->first()->name;
+        $m1Model = m1::where('service_type_id', $serviceType)->first();
+        $m1Name = $serviceTypeName;
+        $m3Model = m3::where('service_type_id', $serviceType)->first();
+        $m3Name = $m3Model ? $serviceTypeName. ' ' .($m3Model->name) : $serviceTypeName;
+        $m6Models = m6::where('service_type_id', $serviceType)->pluck('radio_tezlik_zolagi_id');
+        $plRadioTezlikZolagi = pl_radi_tezlik_zolagi::whereIn('id', $m6Models)
+            ->get(['id', 'name', 'coefficient']);
+        $m7Model = m7::where('service_type_id', $serviceType)->first();
+        $m7Name = $m7Model ? $serviceTypeName. ' ' .($m7Model->name) : $serviceTypeName;
+        return response()->json([
+
+            'm1' => array_merge($m1Model->toArray(),['name' => $m1Name]),
+            'm3' => array_merge($m3Model->toArray(),['name' => $m3Name]),
+            'm6' => $plRadioTezlikZolagi->toArray(),
+            'm7' => array_merge($m7Model->toArray(),['name' => $m7Name])
+        ]);
+    }
+    public function OtherTermPayment(Request $request)
+    {
+        $data = $request->all();
+        $serviceTypeId = service_type::find($data['ServiceType']);
+        $value = $request->input('M5');
+        $UserGroupCoefficient = user_group::find($data['UserQrup'])->coefficient;
+        $m1Coefficient = m1::find($data['M1'])->coefficient;
+        $m2Coefficient = $data['M2'];
+        $m3Coefficient = m3::find($data['M3'])->coefficient;
+        $m4Coefficient = b4::find($data['M4'])->coefficient;
+        $m5Coefficient = m5::where('service_type_id', $serviceTypeId->id)
+            ->where(function ($query) use ($value) {
+                $query->whereNull('m5_min')->orWhere('m5_min', '<=', $value);
+            })
+            ->where(function ($query) use ($value) {
+                $query->whereNull('m5_max')->orWhere('m5_max', '>=', $value);
+            })
+            ->first()->coefficient;
+        $m6Coefficient = pl_radi_tezlik_zolagi::find($data['M6'])->coefficient;
+        $m7Coefficient = m7::find($data['M7'])->coefficient;
+        $m8Coefficient = round($data['M8']/365, 2);
+        if($serviceTypeId->key=="Radio yayımı (T_DAB)" || $serviceTypeId->key=="TV yayımı (DVB-T)"){
+            $rCoefficient = 1;//r::find($data['R'])->coefficient;; //Data ELave Olunalidir r
+            $Sum=$m1Coefficient*$m2Coefficient*$m3Coefficient*$m4Coefficient*$m5Coefficient*$m6Coefficient*$m7Coefficient*$m8Coefficient*$rCoefficient*$UserGroupCoefficient;
+        }
+        else{
+            $Sum=$m1Coefficient*$m2Coefficient*$m3Coefficient*$m4Coefficient*$m5Coefficient*$m6Coefficient*$m7Coefficient*$m8Coefficient*$UserGroupCoefficient;
+        }
+        $FirstTotal = round($Sum / 1.18, 2);
+        $TaxTotal = round(($Sum / 1.18) * 0.18, 2);
+        return response()->json([
+            'UserGroup_coefficient' => $UserGroupCoefficient,
+            'M1_coefficient' => $m1Coefficient,
+            'M2_coefficient' => $m2Coefficient,
+            'M3_coefficient' => $m3Coefficient,
+            'M4_coefficient' => $m4Coefficient,
+            'M5_coefficient' => $m5Coefficient,
+            'M6_coefficient' => $m6Coefficient,
+            'M7_coefficient' => $m7Coefficient,
+            'M8_coefficient' => $m8Coefficient,
+            'Sum' => $Sum,
+            'FirstTotal' => $FirstTotal,
+            'TaxTotal' => $TaxTotal,
+        ]);
     }
 }

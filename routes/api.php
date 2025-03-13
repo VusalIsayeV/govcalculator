@@ -12,3 +12,5 @@ Route::post('/OneTimePayment', [CalculatorController::class, 'OneTimePaymentPost
 Route::post('/SellularTermPayment', [CalculatorController::class, 'SellularTermPayment']);
 Route::get('/OtherTermPaymentM1M3M5M6M7', [CalculatorController::class, 'OtherTermPaymentM1M3M5M6M7']);
 Route::post('/OtherTermPayment', [CalculatorController::class, 'OtherTermPayment']);
+Route::get('/SellularTermPaymentGet', [CalculatorController::class, 'SellularTermPaymentGet']);
+Route::post('/SellularTermPayment', [CalculatorController::class, 'SellularTermPayment']);

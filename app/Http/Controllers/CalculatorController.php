@@ -91,9 +91,73 @@ class CalculatorController extends Controller
             'TaxTotal' => $TaxTotal,
         ]);
     }
+    public function SellularTermPaymentGet()
+    {
+        $ZE1=1;
+        $ZE2=0.90;
+        $ZE3=0.70;
+        $ZE4=0.60;
+        $ZE5=0.30;
+        $ZE6=0.20;
+        $ZE7=0.08;
+        $SD=600;
+        $TES=100;
+        $TED=1;
+        return response()->json([
+            'ZE1' => $ZE1,
+            'ZE2' => $ZE2,
+            'ZE3' => $ZE3,
+            'ZE4' => $ZE4,
+            'ZE5' => $ZE5,
+            'ZE6' => $ZE6,
+            'ZE7' => $ZE7,
+            'SD' => $SD,
+            'TES' => $TES,
+            'TED' => $TED
+        ]);
+    }
+
+    //Dusturu gozden keciremk lazimdir buradaki qurulmus dustur isleyri duz hesablayir sadece Govdaki ile eyni neticeni vermir menim ucun
     public function SellularTermPayment(Request $request)
     {
-        //
+        $SGZ1 = $request->input('SGZ1');
+        $SGZ2 = $request->input('SGZ2');
+        $SGZ3 = $request->input('SGZ3');
+        $SGZ4 = $request->input('SGZ4');
+        $SGZ5 = $request->input('SGZ5');
+        $SGZ6 = $request->input('SGZ6');
+        $SGZ7 = $request->input('SGZ7');
+        $DGZ1 = $request->input('DGZ1');
+        $DGZ2 = $request->input('DGZ2');
+        $DGZ3 = $request->input('DGZ3');
+        $DGZ4 = $request->input('DGZ4');
+        $DGZ5 = $request->input('DGZ5');
+        $DGZ6 = $request->input('SGZ6');
+        $DGZ7 = $request->input('SGZ7');
+        $T=round($request['T']/365, 2);
+        $ZE1=1;
+        $ZE2=0.90;
+        $ZE3=0.70;
+        $ZE4=0.60;
+        $ZE5=0.30;
+        $ZE6=0.20;
+        $ZE7=0.08;
+        $SD=600;
+        $TES=100;
+        $TED=1;
+        $s_sum=$SD*$TES*$T*($SGZ1*$ZE1+$SGZ2*$ZE2+$SGZ3*$ZE3+$SGZ4*$ZE4+$SGZ5*$ZE5+$SGZ6*$ZE6+$SGZ7*$ZE7);
+        $d_sum=$SD*$TED*$T*($DGZ1*$ZE1+$DGZ2*$ZE2+$DGZ3*$ZE3+$DGZ4*$ZE4+$DGZ5*$ZE5+$DGZ6*$ZE6+$DGZ7*$ZE7);
+        $Sum=$s_sum+$d_sum;
+        $FirstTotal = round($Sum / 1.18, 2);
+        $TaxTotal = round(($Sum / 1.18) * 0.18, 2);
+        return response()->json([
+            'T'=>$T,
+            's_sum' => $s_sum,
+            'd_sum' => $d_sum,
+            'Sum' => $Sum,
+            'FirstTotal' => $FirstTotal,
+            'TaxTotal' => $TaxTotal,
+        ]);
     }
     public function OtherTermPaymentM1M3M5M6M7(Request $request)
     {

@@ -7,6 +7,7 @@ use App\Http\Controllers\CalculatorController;
 Route::get('/UserGroup', [CalculatorController::class, 'OneTimePaymentUserGroup']);
 Route::get('/ServiceType', [CalculatorController::class, 'OneTimePaymentServiceType']);
 Route::get('/B4', [CalculatorController::class, 'OneTimePaymentB4']);
+Route::post('/M5', [CalculatorController::class, 'M5']);
 Route::get('/OneTimePaymentB1B3B5', [CalculatorController::class, 'OneTimePaymentB1B3B5']);
 Route::post('/OneTimePayment', [CalculatorController::class, 'OneTimePaymentPost']);
 Route::post('/SellularTermPayment', [CalculatorController::class, 'SellularTermPayment']);
